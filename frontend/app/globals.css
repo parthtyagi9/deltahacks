@@ -184,4 +184,7 @@
   h1 {
     @apply text-4xl lg:text-6xl font-bold;
   }
+  h2 {
+    @apply text-xl lg:text-2xl font-normal;
+  }
 }
