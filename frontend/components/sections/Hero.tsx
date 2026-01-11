@@ -82,9 +82,23 @@ export default function HeroSection() {
           <Link href="/auth/register" className="w-full sm:w-48">
             <Button
               size="lg"
-              className="rounded-none w-full h-14 bg-white text-black font-black uppercase border-2 border-white hover:bg-transparent hover:text-white transition-all shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:shadow-none active:translate-x-1 active:translate-y-1"
+              className="
+      rounded-none w-full h-14 
+      /* Default State: Clean & Flat */
+      bg-white text-black font-black uppercase border-2 border-white 
+      transition-all duration-200 shadow-[0px_0px_0px_0px_rgba(255,255,255,1)]
+      
+      /* Hover State: Pops OUT (Reveals Shadow & Moves Up/Left) */
+      hover:bg-white hover:text-black 
+      hover:-translate-x-1 hover:-translate-y-1 
+      hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]
+      
+      /* Active/Click State: Sinks IN (Hides Shadow & Moves Down/Right) */
+      active:translate-x-0 active:translate-y-0 
+      active:shadow-none
+    "
             >
-              Get Started <ChevronRight size={20} />
+              Get Started <ChevronRight size={20} className="ml-2" />
             </Button>
           </Link>
         </div>
