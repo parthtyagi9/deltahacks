@@ -1,17 +1,31 @@
 from fastapi import FastAPI, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from database import get_db
+from database import get_db, engine 
 import models, schemas
 import uuid
+from ai_engine import generate_insights
+from typing import List
+
+# --- CRITICAL FIX: ENABLE EXTENSION FIRST ---
+# 1. Connect and enable UUID support
+with engine.connect() as connection:
+    connection.commit() # Ensure clean state
+    connection.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'))
+    connection.commit()
+
+# 2. NOW build the tables (because the function exists now)
+models.Base.metadata.create_all(bind=engine)
+# --------------------------------------------
 
 app = FastAPI()
 
+# ... (Rest of code remains the same)
+
 # --- 1. ONBOARDING ENDPOINT ---
-# The Frontend calls this to create a new company and get an API Key
 @app.post("/api/onboarding", response_model=schemas.ProjectResponse)
 def create_project(project_data: schemas.ProjectCreate, db: Session = Depends(get_db)):
-    # Generate a simple API key (in real life, make this more secure)
+    # Generate a simple API key
     new_api_key = f"key-{uuid.uuid4().hex[:8]}"
     
     new_project = models.Project(
@@ -23,16 +37,13 @@ def create_project(project_data: schemas.ProjectCreate, db: Session = Depends(ge
     db.commit()
     db.refresh(new_project)
     
-    # In Phase 3, we will call the AI here to generate the SDK snippet.
-    # For now, we return a placeholder.
     return {
         "project_id": str(new_project.id),
         "api_key": new_project.api_key,
         "sdk_snippet": f"// SDK for {project_data.name}\nimport {{ init }} from 'analytics';\ninit('{new_api_key}');"
     }
 
-# --- 2. INGESTION ENDPOINT (The "Listen" Ear) ---
-# The User's website calls this to send data
+# --- 2. INGESTION ENDPOINT ---
 @app.post("/api/track")
 def track_event(
     event_data: schemas.EventCreate, 
@@ -54,8 +65,7 @@ def track_event(
     db.commit()
     return {"status": "success"}
 
-# --- 3. DASHBOARD ENDPOINT (The "Speak" Mouth) ---
-# The Frontend calls this to show charts
+# --- 3. DASHBOARD ENDPOINT ---
 @app.get("/api/dashboard", response_model=schemas.DashboardResponse)
 def get_dashboard(x_api_key: str = Header(None), db: Session = Depends(get_db)):
     # Authenticate
@@ -71,19 +81,25 @@ def get_dashboard(x_api_key: str = Header(None), db: Session = Depends(get_db)):
     # Execute each SQL query safely
     for config in configs:
         try:
-            result = db.execute(text(config.sql_query)).fetchall()
+            # SAFETY: Inject project_id parameter to prevent cross-tenant data leaks
+            result = db.execute(
+                text(config.sql_query), 
+                {"project_id": str(project.id)}
+            ).fetchall()
             
-            # Format result for frontend (simplified for demo)
-            # Assuming query returns: [Label, Value]
+            # Format result for frontend
             formatted_data = [{"label": str(row[0]), "value": row[1]} for row in result]
             
-            # If it's a single number (Stat Card), simplify structure
-            if len(formatted_data) == 1 and config.insight_title.startswith("Total"):
+            # Simplify if it's just a single number (Stat Card)
+            if len(formatted_data) == 1 and ("avg" in config.insight_title.lower() or "total" in config.insight_title.lower()):
                 formatted_data = formatted_data[0]['value'] 
+                widget_type = "stat_card"
+            else:
+                widget_type = "bar_chart"
 
             widgets.append({
                 "title": config.insight_title,
-                "type": "bar_chart" if isinstance(formatted_data, list) else "stat_card",
+                "type": widget_type,
                 "data": formatted_data
             })
         except Exception as e:
@@ -93,4 +109,56 @@ def get_dashboard(x_api_key: str = Header(None), db: Session = Depends(get_db)):
     return {
         "company_name": project.name,
         "widgets": widgets
+    }
+
+# --- 4. NEW: AI GENERATOR ENDPOINT ---
+@app.post("/api/generate-insights")
+def trigger_ai_analysis(x_api_key: str = Header(None), db: Session = Depends(get_db)):
+    # Authenticate
+    project = db.query(models.Project).filter(models.Project.api_key == x_api_key).first()
+    if not project:
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+
+    # Get Sample Data (Last 20 events)
+    recent_events = db.query(models.Event).filter(
+        models.Event.project_id == project.id
+    ).order_by(models.Event.created_at.desc()).limit(20).all()
+
+    if not recent_events:
+        return {"status": "error", "message": "No data found. Send some events first!"}
+
+    # Convert to simple JSON for the AI
+    sample_data = [
+        {"event": e.event_name, "props": e.properties} 
+        for e in recent_events
+    ]
+
+    # Call Gemini
+    print(f"Asking Gemini to analyze {len(sample_data)} events for {project.name}...")
+    ai_insights = generate_insights(project.name, project.description, sample_data)
+
+    # Save Results
+    # 1. Clear old configs (keeps demo clean)
+    db.query(models.InsightConfig).filter(models.InsightConfig.project_id == project.id).delete()
+    
+    # 2. Insert new AI-generated queries
+    for insight in ai_insights:
+        sql = insight['sql_query']
+        # Ensure the query uses the parameter :project_id for safety
+        if ":project_id" not in sql:
+            sql += " WHERE project_id = :project_id"
+            
+        new_config = models.InsightConfig(
+            project_id=project.id,
+            insight_title=insight['title'],
+            sql_query=sql
+        )
+        db.add(new_config)
+    
+    db.commit()
+
+    return {
+        "status": "success", 
+        "message": f"Generated {len(ai_insights)} insights", 
+        "insights": ai_insights
     }
