@@ -1,6 +1,6 @@
-import { Command, Terminal } from "lucide-react";
-import { SignupForm } from "@/components/signup-form";
+import { Terminal } from "lucide-react";
 import Logo from "@/components/ui/Logo";
+import { SignUpForm } from "@/components/signup-form";
 
 export default function SignupPage() {
   return (
@@ -56,7 +56,7 @@ export default function SignupPage() {
 
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-sm">
-            <SignupForm />
+            <SignUpForm />
           </div>
         </div>
 
