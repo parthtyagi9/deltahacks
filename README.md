@@ -33,7 +33,7 @@ Traditional analytics tools (Google Analytics, Mixpanel) force you to adapt your
 | **Backend** | Python, FastAPI | High-performance async API for real-time ingestion. |
 | **Database** | PostgreSQL (JSONB) | "Schema-less" storage using `JSONB` for universal compatibility. |
 | **Infrastructure** | Docker | Containerized database for easy setup. |
-| **AI Engine** | OpenAI / LLMs | Generates SDK code and writes SQL queries on the fly. |
+| **AI Engine** | Gemini / LLMs | Generates SDK code and writes SQL queries on the fly. |
 
 ---
 
