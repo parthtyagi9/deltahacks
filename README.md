@@ -6,6 +6,9 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Next JS](https://img.shields.io/badge/Next-black?style=flat-square&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
 
 > **"The analytics platform that adapts to you, not the other way around."**
 
@@ -26,11 +29,11 @@ Traditional analytics tools (Google Analytics, Mixpanel) force you to adapt your
 
 | Component | Technology | Description |
 | :--- | :--- | :--- |
+| **Frontend** | Next.js, React, Tailwind | Dynamic dashboard rendering engine. |
 | **Backend** | Python, FastAPI | High-performance async API for real-time ingestion. |
 | **Database** | PostgreSQL (JSONB) | "Schema-less" storage using `JSONB` for universal compatibility. |
 | **Infrastructure** | Docker | Containerized database for easy setup. |
 | **AI Engine** | OpenAI / LLMs | Generates SDK code and writes SQL queries on the fly. |
-| **Frontend** | React / Next.js | Dynamic dashboard rendering engine. |
 
 ---
 
