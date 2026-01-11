@@ -1,4 +1,4 @@
-# 🔧 AI Analytics Backend
+# AI Analytics Backend
 
 ![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)
 ![Python](https://img.shields.io/badge/Python-3.9+-blue?style=flat-square&logo=python&logoColor=white)
@@ -10,7 +10,7 @@ The high-performance ingestion engine for the AI-Native Analytics Platform. Buil
 
 ---
 
-## ⚡ Features
+## Features
 
 * **Universal Ingestion:** Accepts any JSON payload via a "Schema-less" design.
 * **Real-Time Processing:** Built on `async` FastAPI for millisecond response times.
@@ -19,7 +19,7 @@ The high-performance ingestion engine for the AI-Native Analytics Platform. Buil
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Component | Technology | Role |
 | :--- | :--- | :--- |
@@ -30,7 +30,7 @@ The high-performance ingestion engine for the AI-Native Analytics Platform. Buil
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Prerequisites
 Ensure you have **Python 3.9+** and **Docker** installed.
