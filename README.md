@@ -48,3 +48,11 @@ graph LR
     AI[AI Engine] -->|SQL Queries| Config[Insights Config]
     DB -->|Execute SQL| Dashboard[User Dashboard]
     Config --> Dashboard
+```
+---
+
+## TRY IT OUT
+
+https://scanalytics.tech
+
+##
