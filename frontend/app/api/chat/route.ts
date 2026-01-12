@@ -1,23 +1,9 @@
+import { schema } from "@/lib/schema";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { convertToModelMessages, streamText, UIMessage } from "ai";
+import { convertToModelMessages, streamObject } from "ai";
 
-// Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
-
-export async function POST(req: Request) {
-  try {
-    const { messages }: { messages: UIMessage[] } = await req.json();
-
-    /**
-     * LOGIC EQUIVALENT TO YOUR PYTHON CLEAN_HISTORY:
-     * The AI SDK's `convertToModelMessages` utility handles the complexity
-     * of mapping roles (user/assistant) and extracting content from parts.
-     */
-// 1. Define the Prompt as a constant
 const ANALYST_PROMPT = `
 You are an advanced Business Intelligence Consultant integrated into a web application.
 Your goal is to interview the user to identify their business type and propose the perfect set of 3-5 analytics metrics (KPIs).
@@ -44,33 +30,37 @@ You are chatting with a human. Keep your responses conversational, concise, and 
 Do not output raw JSON unless specifically requested by the system.
 `;
 
-// 2. Use it in your streamText call
-const result = streamText({
-  model: openrouter.chat("google/gemini-2.0-flash-lite-001"),
-  system: ANALYST_PROMPT, // <--- Inject the new prompt here
-  messages: await convertToModelMessages(messages),
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-    /**
-     * DATA STREAMING:
-     * We use `toUIMessageStreamResponse` to ensure the metadata,
-     * reasoning tokens (if applicable), and text parts are formatted
-     * correctly for your frontend hook.
-     */
-    return result.toUIMessageStreamResponse({
-      // Forwarding reasoning if using models like DeepSeek-R1 or Claude 3.7
-      sendReasoning: true,
-      // Example of custom error masking (similar to your try/except logic)
-      onError: (error) => {
-        console.error("Chat Analyst Endpoint Error:", error);
-        return "Internal System Error: Analytics Engine Offline.";
-      },
+export async function POST(req: Request) {
+  try {
+    // 1. Destructure with a fallback to avoid "not iterable" errors
+    const body = await req.json();
+    const messages = body.messages || body; // Handle both wrapped and unwrapped arrays
+
+    if (!Array.isArray(messages)) {
+      throw new Error("Payload 'messages' is missing or not an array");
+    }
+
+    const result = streamObject({
+      model: openrouter.chat("google/gemini-2.0-flash-lite-001"),
+      system: ANALYST_PROMPT,
+      // 2. Map your custom state messages to the format the SDK expects
+      messages: messages.map((m: any) => ({
+        role: m.role,
+        content: m.content,
+      })),
+      schema: schema, // Ensure you are accessing the inner Zod schema
     });
+
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error("Critical Runtime Error:", error);
     return new Response(
       JSON.stringify({ error: "Failed to process chat request." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500 }
     );
   }
 }
