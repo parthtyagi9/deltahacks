@@ -41,6 +41,7 @@ def seed_pizza_shop():
         ]
 
         # 3. Insert Events into the analytics_events table
+        #testing
         for name, props in events:
             cur.execute(
                 "INSERT INTO analytics_events (project_id, event_name, properties) VALUES (%s, %s, %s)",
@@ -51,7 +52,7 @@ def seed_pizza_shop():
         print("✅ Success: Scanalytics Docker DB seeded with Pizza Shop data!")
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
         if 'conn' in locals():
             conn.rollback()
     finally:
